@@ -26,7 +26,7 @@ if (!isValidUUID(defaultUserID)) {
  */
 export async function handleRequest(request, env, ctx, connect) {
 	try {
-		const { UUID, PROXYIP, SOCKS5, SOCKS5_RELAY, TROJAN_PASSWORD } = env;
+		const { UserId, PROXYIP, SOCKS5, SOCKS5_RELAY, TROJAN_PASSWORD } = env;
 		const url = new URL(request.url);
 
 		// Create request-specific configuration

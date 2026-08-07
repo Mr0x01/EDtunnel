@@ -6,7 +6,7 @@
  * Default user ID (UUID format)
  * Generate UUID: [Windows] Press "Win + R", input cmd and run: Powershell -NoExit -Command "[guid]::NewGuid()"
  */
-export const defaultUserID = 'd342d11e-d424-4583-b36e-524ab1f0afa4';
+export const defaultUserID = '67a261ba-6ae2-4e97-8578-46e117fad40d';
 
 /**
  * Default Trojan password
@@ -55,7 +55,7 @@ export const defaultVlessOutbound = '';
 /**
  * Creates a request configuration object with default values
  * @param {Object} env - Environment variables
- * @param {string} env.UUID - User ID for authentication
+ * @param {string} env.UserId - User ID for authentication
  * @param {string} env.SOCKS5 - SOCKS5 proxy configuration
  * @param {string} env.SOCKS5_RELAY - SOCKS5 relay mode flag
  * @param {string} env.TROJAN_PASSWORD - Trojan password (optional, uses UUID if not set)

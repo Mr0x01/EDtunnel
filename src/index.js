@@ -20,7 +20,7 @@ export default {
 	/**
 	 * Main fetch handler for Cloudflare Worker
 	 * @param {import("@cloudflare/workers-types").Request} request - The incoming request
-	 * @param {{UUID: string, PROXYIP: string, SOCKS5: string, SOCKS5_RELAY: string}} env - Environment variables
+	 * @param {{UserId: string, PROXYIP: string, SOCKS5: string, SOCKS5_RELAY: string}} env - Environment variables
 	 * @param {import("@cloudflare/workers-types").ExecutionContext} ctx - Execution context
 	 * @returns {Promise<Response>} Response object
 	 */
