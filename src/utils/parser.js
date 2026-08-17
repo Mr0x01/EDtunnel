@@ -2,7 +2,7 @@
  * Parser utilities for addresses and parameters
  */
 
-import { proxyIPs } from '../config/defaults.js';
+import { fumidais } from '../config/defaults.js';
 
 /**
  * Parses a VLESS URL into configuration object
@@ -140,21 +140,21 @@ export function socks5AddressParser(address) {
 }
 
 /**
- * Handles proxy configuration and returns standardized proxy settings.
- * @param {string} PROXYIP - Proxy IP configuration from environment
- * @returns {{ip: string, port: string}} Standardized proxy configuration
+ * Handles fumidai configuration and returns standardized fumidai settings.
+ * @param {string} FUMIDAI - Fumidai IP configuration from environment
+ * @returns {{ip: string, port: string}} Standardized fumidai configuration
  */
-export function handleProxyConfig(PROXYIP) {
-	if (PROXYIP) {
-		const proxyAddresses = PROXYIP.split(',').map(addr => addr.trim());
-		const selectedProxy = selectRandomAddress(proxyAddresses);
-		const [ip, port = '443'] = selectedProxy.split(':');
+export function handleFumidaiConfig(FUMIDAI) {
+	if (FUMIDAI) {
+		const fumidaiAddresses = FUMIDAI.split(',').map(addr => addr.trim());
+		const selectedFumidai = selectRandomAddress(fumidaiAddresses);
+		const [ip, port = '443'] = selectedFumidai.split(':');
 		return { ip, port };
 	} else {
-		// Use default from proxyIPs
-		const defaultProxy = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
-		const port = defaultProxy.includes(':') ? defaultProxy.split(':')[1] : '443';
-		const ip = defaultProxy.split(':')[0];
+		// Use default from fumidais
+		const defaultFumidai = fumidais[Math.floor(Math.random() * fumidais.length)];
+		const port = defaultFumidai.includes(':') ? defaultFumidai.split(':')[1] : '443';
+		const ip = defaultFumidai.split(':')[0];
 		return { ip, port };
 	}
 }
@@ -195,11 +195,11 @@ export function parseEncodedQueryParams(pathname) {
 }
 
 /**
- * Decodes proxy address with Base64 encoded username:password.
+ * Decodes fumidai address with Base64 encoded username:password.
  * @param {string} address - Address string (may contain Base64 encoded credentials)
  * @returns {string} Decoded address string
  */
-function decodeProxyAddress(address) {
+function decodeFumidaiAddress(address) {
 	if (!address.includes('@')) return address;
 
 	const atIndex = address.lastIndexOf('@');
@@ -219,34 +219,34 @@ function decodeProxyAddress(address) {
 }
 
 /**
- * Parses path-based proxy parameters.
- * Supports formats: /proxyip=, /proxyip., /socks5=, /socks://, /socks5://, /http=, /http://, /vless://
+ * Parses path-based fumidai parameters.
+ * Supports formats: /fumidai=, /fumidai., /socks5=, /socks://, /socks5://, /http=, /http://, /vless://
  * @param {string} pathname - URL pathname
- * @returns {{proxyip: string|null, socks5: string|null, http: string|null, vless: string|null, globalProxy: boolean}} Parsed parameters
+ * @returns {{fumidai: string|null, socks5: string|null, http: string|null, vless: string|null, globalFumidai: boolean}} Parsed parameters
  */
-export function parsePathProxyParams(pathname) {
+export function parsePathFumidaiParams(pathname) {
 	const result = {
-		proxyip: null,
+		fumidai: null,
 		socks5: null,
 		http: null,
 		vless: null,
-		globalProxy: false
+		globalFumidai: false
 	};
 
-	// 1. Match /proxyip=host:port, /proxyip.domain.com, /pyip=, /ip=
-	const proxyipMatch = pathname.match(/^\/(proxyip[.=]|pyip=|ip=)([^/?#]+)/i);
-	if (proxyipMatch) {
-		const prefix = proxyipMatch[1].toLowerCase();
-		const value = proxyipMatch[2];
-		result.proxyip = prefix === 'proxyip.' ? `proxyip.${value}` : value;
+	// 1. Match /fumidai=host:port, /fumidai.domain.com, /pyip=, /ip=
+	const fumidaiMatch = pathname.match(/^\/(fumidai[.=]|pyip=|ip=)([^/?#]+)/i);
+	if (fumidaiMatch) {
+		const prefix = fumidaiMatch[1].toLowerCase();
+		const value = fumidaiMatch[2];
+		result.fumidai = prefix === 'fumidai.' ? `fumidai.${value}` : value;
 		return result;
 	}
 
 	// 2. Match /socks://base64@host:port or /socks5://user:pass@host:port
 	const socksUrlMatch = pathname.match(/^\/(socks5?):\/\/?([^/?#]+)/i);
 	if (socksUrlMatch) {
-		result.socks5 = decodeProxyAddress(socksUrlMatch[2]);
-		result.globalProxy = true;
+		result.socks5 = decodeFumidaiAddress(socksUrlMatch[2]);
+		result.globalFumidai = true;
 		return result;
 	}
 
@@ -255,9 +255,9 @@ export function parsePathProxyParams(pathname) {
 	if (socksEqMatch) {
 		const type = socksEqMatch[1].toLowerCase();
 		result.socks5 = socksEqMatch[2];
-		// g prefix enables global proxy mode
+		// g prefix enables global fumidai mode
 		if (type.startsWith('g')) {
-			result.globalProxy = true;
+			result.globalFumidai = true;
 		}
 		return result;
 	}
@@ -265,8 +265,8 @@ export function parsePathProxyParams(pathname) {
 	// 4. Match /http://user:pass@host:port
 	const httpUrlMatch = pathname.match(/^\/http:\/\/?([^/?#]+)/i);
 	if (httpUrlMatch) {
-		result.http = decodeProxyAddress(httpUrlMatch[1]);
-		result.globalProxy = true;
+		result.http = decodeFumidaiAddress(httpUrlMatch[1]);
+		result.globalFumidai = true;
 		return result;
 	}
 
@@ -275,9 +275,9 @@ export function parsePathProxyParams(pathname) {
 	if (httpEqMatch) {
 		const type = httpEqMatch[1].toLowerCase();
 		result.http = httpEqMatch[2];
-		// g prefix enables global proxy mode
+		// g prefix enables global fumidai mode
 		if (type.startsWith('g')) {
-			result.globalProxy = true;
+			result.globalFumidai = true;
 		}
 		return result;
 	}
@@ -288,18 +288,18 @@ export function parsePathProxyParams(pathname) {
 		// Reconstruct the full VLESS URL
 		const vlessPath = pathname.slice(1); // Remove leading /
 		result.vless = vlessPath;
-		result.globalProxy = true;
+		result.globalFumidai = true;
 		return result;
 	}
 
-	// 7. Match /vless= or /gvless= (g prefix enables global proxy mode)
+	// 7. Match /vless= or /gvless= (g prefix enables global fumidai mode)
 	const vlessEqMatch = pathname.match(/^\/(g?vless)=([^/?#]+)/i);
 	if (vlessEqMatch) {
 		const type = vlessEqMatch[1].toLowerCase();
 		result.vless = decodeURIComponent(vlessEqMatch[2]);
-		// g prefix enables global proxy mode
+		// g prefix enables global fumidai mode
 		if (type.startsWith('g')) {
-			result.globalProxy = true;
+			result.globalFumidai = true;
 		}
 		return result;
 	}

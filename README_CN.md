@@ -46,13 +46,13 @@
 | 变量名 | 是否必需 | 示例 | 说明 |
 |--------|----------|------|------|
 | `UUID` | 否 | 单个: `12345678-1234-1234-1234-123456789012`<br>多个: `uuid1,uuid2,uuid3` | 用户识别码 |
-| `PROXYIP` | 否 | `1.1.1.1` 或 `example.com`<br>多个: `1.1.1.1:9443,2.2.2.2:8443` | 自定义代理IP和端口 |
+| `FUMIDAI` | 否 | `1.1.1.1` 或 `example.com`<br>多个: `1.1.1.1:9443,2.2.2.2:8443` | 自定义代理IP和端口 |
 | `SOCKS5` | 否 | `user:pass@host:port`<br>多个: `user1:pass1@host1:port1,user2:pass2@host2:port2` | SOCKS5代理配置 |
 | `SOCKS5_RELAY` | 否 | `true` 或 `false` | 启用SOCKS5流量转发 |
 | `TROJAN_PASSWORD` | 否 | `your-password` | Trojan密码（不设置则使用UUID） |
 | `VLESS_OUTBOUND` | 否 | `vless://uuid@host:port?type=ws&security=tls` | VLESS出站代理URL |
-| `PROXY_TIMEOUT` | 否 | `1500` | 代理连接超时（毫秒，默认：1500） |
-| `PROXY_FALLBACK` | 否 | `true` 或 `false` | 代理失败时回退到直连（默认：true） |
+| `FUMIDAI_TIMEOUT` | 否 | `1500` | 代理连接超时（毫秒，默认：1500） |
+| `FUMIDAI_FALLBACK` | 否 | `true` 或 `false` | 代理失败时回退到直连（默认：true） |
 
 ### URL 查询参数配置
 
@@ -60,11 +60,11 @@
 
 | 查询参数 | 对应环境变量 | 示例 | 说明 |
 |----------|--------------|------|------|
-| `proxyip` | `PROXYIP` | `?proxyip=1.1.1.1:443` | 覆盖代理IP和端口 |
+| `fumidai` | `FUMIDAI` | `?fumidai=1.1.1.1:443` | 覆盖代理IP和端口 |
 | `socks5` | `SOCKS5` | `?socks5=user:pass@host:port` | 覆盖SOCKS5代理配置 |
 | `http` | - | `?http=user:pass@host:port` | HTTP CONNECT代理配置 |
 | `vless` | `VLESS_OUTBOUND` | `?vless=vless://uuid@host:port` | 覆盖VLESS出站代理 |
-| `globalproxy` | - | `?globalproxy` | 启用全局代理模式（转发所有流量） |
+| `globalfumidai` | - | `?globalfumidai` | 启用全局代理模式（转发所有流量） |
 
 > **安全说明**：UUID 必须通过环境变量或配置文件设置，不能通过 URL 参数设置，以防止未授权修改用户身份。
 
@@ -74,7 +74,7 @@
 
 | 路径格式 | 示例 | 说明 |
 |----------|------|------|
-| `/proxyip=` | `/proxyip=1.1.1.1:443` | 通过路径设置代理IP |
+| `/fumidai=` | `/fumidai=1.1.1.1:443` | 通过路径设置代理IP |
 | `/socks5://` | `/socks5://user:pass@host:port` | 通过路径设置SOCKS5代理 |
 | `/http://` | `/http://user:pass@host:port` | 通过路径设置HTTP CONNECT代理 |
 | `/vless://` | `/vless://uuid@host:port?...` | 通过路径设置VLESS出站代理 |
@@ -84,17 +84,17 @@
 
 1. 临时更改代理IP：
    ```text
-   https://your-domain.workers.dev/?proxyip=another-proxy-ip:port
+   https://your-domain.workers.dev/?fumidai=another-fumidai-ip:port
    ```
 
 2. 组合多个参数：
    ```text
-   https://your-domain.workers.dev/?proxyip=1.1.1.1:443&socks5_relay=true
+   https://your-domain.workers.dev/?fumidai=1.1.1.1:443&socks5_relay=true
    ```
 
 3. 应用于特定路径：
    ```text
-   https://your-domain.workers.dev/sub/your-uuid?proxyip=1.1.1.1:443
+   https://your-domain.workers.dev/sub/your-uuid?fumidai=1.1.1.1:443
    ```
 
 #### 特性说明
@@ -107,15 +107,15 @@
 #### URL 格式注意事项
 
 - 确保查询参数使用正确的格式：`?参数名=值`。问号 `?` 不应被URL编码（`%3F`）。
-- 如果您看到像 `/%3Fproxyip=value` 这样的URL，这不会正确工作，应改为 `/?proxyip=value`。
+- 如果您看到像 `/%3Ffumidai=value` 这样的URL，这不会正确工作，应改为 `/?fumidai=value`。
 - 本项目现已支持处理编码在路径中的查询参数，但建议使用标准格式以确保最佳兼容性。
 
 ### 非443端口配置
 
-1. 访问 `https://proxyip.edtunnel.best/`
-2. 输入 `ProxyIP:proxyport` 并点击检查
-3. 当显示 `Proxy IP: true` 时可用
-4. 在 Worker 中配置：`PROXYIP=211.230.110.231:50008`
+1. 访问 `https://fumidai.edtunnel.best/`
+2. 输入 `Fumidai:fumidaiport` 并点击检查
+3. 当显示 `Fumidai IP: true` 时可用
+4. 在 Worker 中配置：`FUMIDAI=211.230.110.231:50008`
 
 注意：带端口的代理IP可能在某些仅支持HTTP的Cloudflare站点上无效。
 
@@ -147,8 +147,8 @@ UUID=uuid1,uuid2,uuid3
 # SOCKS5多个代理
 SOCKS5=192.168.1.1:1080,192.168.1.2:1080
 
-# PROXYIP多个地址
-PROXYIP=1.1.1.1:443,2.2.2.2:443
+# FUMIDAI多个地址
+FUMIDAI=1.1.1.1:443,2.2.2.2:443
 ```
 
 **错误示例：**
@@ -194,10 +194,10 @@ EDtunnel 现已支持 Trojan 协议，可自动检测协议类型：
 
 ```bash
 # 通过 URL 路径
-https://your-domain.workers.dev/http://user:pass@proxy-host:port/sub/uuid
+https://your-domain.workers.dev/http://user:pass@fumidai-host:port/sub/uuid
 
 # 通过 URL 参数
-https://your-domain.workers.dev/?http=user:pass@proxy-host:port
+https://your-domain.workers.dev/?http=user:pass@fumidai-host:port
 ```
 
 ### VLESS 出站代理
@@ -236,7 +236,7 @@ https://your-domain.workers.dev/?vless=vless://uuid@host:port
 
 - 基础格式：`host:port`
 - 认证格式：`username:password@host:port`
-- 多代理格式（使用英文逗号分隔）：`proxy1,proxy2,proxy3`
+- 多代理格式（使用英文逗号分隔）：`fumidai1,fumidai2,fumidai3`
 
 #### 配置示例
 
@@ -284,16 +284,16 @@ SOCKS5_RELAY=true
 配置多个代理地址时，系统提供以下功能：
 
 - **随机轮换**：自动从可用代理中随机选择
-- **连接超时**：通过 `PROXY_TIMEOUT` 配置（默认：1500毫秒）
+- **连接超时**：通过 `FUMIDAI_TIMEOUT` 配置（默认：1500毫秒）
 - **自动故障转移**：失败时尝试下一个代理
-- **直连回退**：所有代理失败时回退到直连（通过 `PROXY_FALLBACK` 配置）
+- **直连回退**：所有代理失败时回退到直连（通过 `FUMIDAI_FALLBACK` 配置）
 
 ```bash
 # 配置超时时间（毫秒）
-PROXY_TIMEOUT=2000
+FUMIDAI_TIMEOUT=2000
 
 # 禁用直连回退
-PROXY_FALLBACK=false
+FUMIDAI_FALLBACK=false
 ```
 
 注意事项：

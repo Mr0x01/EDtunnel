@@ -1,18 +1,18 @@
 /**
- * TCP outbound connection management with multi-proxy rotation
+ * TCP outbound connection management with multi-fumidai rotation
  */
 
 import { socks5Connect } from './socks5.js';
 import { httpConnect } from './http.js';
 import { remoteSocketToWS } from './stream.js';
 import { safeCloseWebSocket } from '../utils/websocket.js';
-import { resolveProxyAddresses, connectWithRotation } from '../utils/proxyResolver.js';
+import { resolveFumidaiAddresses, connectWithRotation } from '../utils/fumidaiResolver.js';
 import { vlessOutboundConnect, VLESS_CMD_TCP } from './vless.js';
 
 /**
- * Handles outbound TCP connections for the proxy.
+ * Handles outbound TCP connections for the fumidai.
  * Establishes connection to remote server and manages data flow.
- * Supports multi-proxy rotation with fallback mechanism.
+ * Supports multi-fumidai rotation with fallback mechanism.
  * @param {{value: import("@cloudflare/workers-types").Socket | null}} remoteSocket - Remote socket wrapper
  * @param {number} addressType - Type of address (1=IPv4, 2=Domain, 3=IPv6)
  * @param {string} addressRemote - Remote server address
@@ -27,11 +27,11 @@ import { vlessOutboundConnect, VLESS_CMD_TCP } from './vless.js';
 export async function handleTCPOutBound(remoteSocket, addressType, addressRemote, portRemote, rawClientData, webSocket, protocolResponseHeader, log, config, connect) {
 
 	/**
-	 * Connects to target via VLESS, SOCKS5 or HTTP proxy
+	 * Connects to target via VLESS, SOCKS5 or HTTP fumidai
 	 * @returns {Promise<import("@cloudflare/workers-types").Socket|{readable: ReadableStream, writable: WritableStream, closed: Promise<void>}>}
 	 */
-	async function connectViaProxy() {
-		if (config.proxyType === 'vless' && config.parsedVlessOutbound) {
+	async function connectViaFumidai() {
+		if (config.fumidaiType === 'vless' && config.parsedVlessOutbound) {
 			log(`[TCP] Connecting via VLESS outbound to ${addressRemote}:${portRemote}`);
 			const vlessResult = await vlessOutboundConnect(
 				config.parsedVlessOutbound,
@@ -51,20 +51,20 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 				writable: vlessResult.writable,
 				closed: vlessResult.closed
 			};
-		} else if (config.proxyType === 'http') {
-			log(`[TCP] Connecting via HTTP proxy to ${addressRemote}:${portRemote}`);
-			const tcpSocket = await httpConnect(addressType, addressRemote, portRemote, log, config.parsedProxyAddress, connect, rawClientData);
+		} else if (config.fumidaiType === 'http') {
+			log(`[TCP] Connecting via HTTP fumidai to ${addressRemote}:${portRemote}`);
+			const tcpSocket = await httpConnect(addressType, addressRemote, portRemote, log, config.parsedFumidaiAddress, connect, rawClientData);
 			if (!tcpSocket) {
-				throw new Error('HTTP proxy connection failed');
+				throw new Error('HTTP fumidai connection failed');
 			}
 			return tcpSocket;
 		} else {
-			log(`[TCP] Connecting via SOCKS5 proxy to ${addressRemote}:${portRemote}`);
-			const tcpSocket = await socks5Connect(addressType, addressRemote, portRemote, log, config.parsedProxyAddress, connect);
+			log(`[TCP] Connecting via SOCKS5 fumidai to ${addressRemote}:${portRemote}`);
+			const tcpSocket = await socks5Connect(addressType, addressRemote, portRemote, log, config.parsedFumidaiAddress, connect);
 			if (!tcpSocket) {
-				throw new Error('SOCKS5 proxy connection failed');
+				throw new Error('SOCKS5 fumidai connection failed');
 			}
-			// Write initial data for SOCKS5 (HTTP proxy handles internally)
+			// Write initial data for SOCKS5 (HTTP fumidai handles internally)
 			const writer = tcpSocket.writable.getWriter();
 			await writer.write(rawClientData);
 			writer.releaseLock();
@@ -88,26 +88,26 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 	}
 
 	/**
-	 * Connects using multi-proxy rotation with fallback
+	 * Connects using multi-fumidai rotation with fallback
 	 * @param {boolean} enableFallback - Whether to fallback to direct connection if all proxies fail
 	 * @returns {Promise<import("@cloudflare/workers-types").Socket>}
 	 */
-	async function connectWithProxyRotation(enableFallback = true) {
-		// Resolve proxy addresses (uses cache if available)
-		const proxyAddresses = await resolveProxyAddresses(
-			config.proxyIP,
+	async function connectWithFumidaiRotation(enableFallback = true) {
+		// Resolve fumidai addresses (uses cache if available)
+		const fumidaiAddresses = await resolveFumidaiAddresses(
+			config.fumidai,
 			addressRemote,
 			config.userID || ''
 		);
 
-		if (proxyAddresses.length > 0) {
+		if (fumidaiAddresses.length > 0) {
 			// Try connecting with rotation
 			const result = await connectWithRotation(
-				proxyAddresses,
+				fumidaiAddresses,
 				rawClientData,
 				connect,
 				log,
-				config.proxyTimeout || 1500
+				config.fumidaiTimeout || 1500
 			);
 
 			if (result) {
@@ -121,7 +121,7 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 			return await connectDirect(addressRemote, portRemote);
 		}
 
-		throw new Error('All proxy connections failed and fallback is disabled');
+		throw new Error('All fumidai connections failed and fallback is disabled');
 	}
 
 	/**
@@ -130,14 +130,14 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 	async function retry() {
 		let tcpSocket;
 
-		// Check if global proxy mode is enabled (SOCKS5, HTTP, or VLESS)
-		const hasProxyConfig = config.parsedProxyAddress || config.parsedVlessOutbound;
-		if (config.globalProxy && config.proxyType && hasProxyConfig) {
-			// Use SOCKS5/HTTP/VLESS proxy for retry
-			tcpSocket = await connectViaProxy();
-		} else if (config.proxyIP) {
-			// Use proxy rotation for retry
-			tcpSocket = await connectWithProxyRotation(config.enableProxyFallback !== false);
+		// Check if global fumidai mode is enabled (SOCKS5, HTTP, or VLESS)
+		const hasFumidaiConfig = config.parsedFumidaiAddress || config.parsedVlessOutbound;
+		if (config.globalFumidai && config.fumidaiType && hasFumidaiConfig) {
+			// Use SOCKS5/HTTP/VLESS fumidai for retry
+			tcpSocket = await connectViaFumidai();
+		} else if (config.fumidai) {
+			// Use fumidai rotation for retry
+			tcpSocket = await connectWithFumidaiRotation(config.enableFumidaiFallback !== false);
 		} else {
 			// Direct connection as last resort
 			tcpSocket = await connectDirect(addressRemote, portRemote);
@@ -158,13 +158,13 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 	// Main connection logic
 	let tcpSocket;
 
-	// Check if global proxy mode is enabled (SOCKS5, HTTP, or VLESS)
-	const hasProxyConfig = config.parsedProxyAddress || config.parsedVlessOutbound;
-	if (config.globalProxy && config.proxyType && hasProxyConfig) {
-		// Global proxy mode: use SOCKS5/HTTP/VLESS proxy directly
-		log(`[TCP] Using ${config.proxyType.toUpperCase()} proxy (global mode)`);
-		tcpSocket = await connectViaProxy();
-		log(`[TCP] connectViaProxy returned, tcpSocket=${tcpSocket ? 'valid' : 'null'}`);
+	// Check if global fumidai mode is enabled (SOCKS5, HTTP, or VLESS)
+	const hasFumidaiConfig = config.parsedFumidaiAddress || config.parsedVlessOutbound;
+	if (config.globalFumidai && config.fumidaiType && hasFumidaiConfig) {
+		// Global fumidai mode: use SOCKS5/HTTP/VLESS fumidai directly
+		log(`[TCP] Using ${config.fumidaiType.toUpperCase()} fumidai (global mode)`);
+		tcpSocket = await connectViaFumidai();
+		log(`[TCP] connectViaFumidai returned, tcpSocket=${tcpSocket ? 'valid' : 'null'}`);
 
 		if (!tcpSocket) {
 			log('[TCP] VLESS connection returned null, closing WebSocket');
@@ -185,7 +185,7 @@ export async function handleTCPOutBound(remoteSocket, addressType, addressRemote
 		log(`[TCP] Calling remoteSocketToWS`);
 		remoteSocketToWS(tcpSocket, webSocket, protocolResponseHeader, null, log);
 	} else {
-		// Standard mode: try direct first, then retry with proxy
+		// Standard mode: try direct first, then retry with fumidai
 		try {
 			tcpSocket = await connectDirect(addressRemote, portRemote);
 			remoteSocket.value = tcpSocket;

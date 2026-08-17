@@ -1,10 +1,10 @@
 import { connect } from 'cloudflare:sockets';
 import { WS_READY_STATE_OPEN } from '../config.js';
 import { parseVLESSHeader } from '../protocol/vless.js';
-import { socks5Connect } from '../proxy/socks5.js';
-import { handleUDPOutBound } from '../proxy/dns.js';
-import { pipeRemoteToWebSocket, closeSocket } from '../proxy/tcp.js';
-import { getProxyConfiguration } from '../utils/parser.js';
+import { socks5Connect } from '../fumidai/socks5.js';
+import { handleUDPOutBound } from '../fumidai/dns.js';
+import { pipeRemoteToWebSocket, closeSocket } from '../fumidai/tcp.js';
+import { getFumidaiConfiguration } from '../utils/parser.js';
 
 /**
  * 创建 WebSocket 可读流
@@ -36,7 +36,7 @@ export function createWebSocketReadableStream(ws, earlyDataHeader) {
  * 处理 VLESS WebSocket 连接
  */
 export async function handleVLESSWebSocket(request, config) {
-    const { parsedSocks5Address, enableSocks, enableGlobalSocks, ProxyIP, ProxyPort } = config;
+    const { parsedSocks5Address, enableSocks, enableGlobalSocks, Fumidai, FumidaiPort } = config;
     const wsPair = new WebSocketPair();
     const [clientWS, serverWS] = Object.values(wsPair);
 
@@ -122,8 +122,8 @@ export async function handleVLESSWebSocket(request, config) {
                     if (enableSocks) {
                         tcpSocket = await socks5Connect(result.addressType, result.addressRemote, result.portRemote, parsedSocks5Address);
                     } else {
-                        const proxyConfig = getProxyConfiguration(result.addressRemote, result.portRemote, ProxyIP, ProxyPort);
-                        tcpSocket = await connect({ hostname: proxyConfig.ip, port: proxyConfig.port }, { allowHalfOpen: true });
+                        const fumidaiConfig = getFumidaiConfiguration(result.addressRemote, result.portRemote, Fumidai, FumidaiPort);
+                        tcpSocket = await connect({ hostname: fumidaiConfig.ip, port: fumidaiConfig.port }, { allowHalfOpen: true });
                     }
                     remoteSocket = tcpSocket;
                     const writer = tcpSocket.writable.getWriter();

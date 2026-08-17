@@ -3,17 +3,17 @@
  */
 
 import { at, pt, ed, trojanPt, HttpPort, HttpsPort } from '../config/constants.js';
-import { proxyIPs } from '../config/defaults.js';
+import { fumidais } from '../config/defaults.js';
 
 /**
  * Generates subscription content with VLESS and Trojan URLs.
  * @param {string} userID_path - User ID path (supports comma-separated multiple UUIDs)
  * @param {string} hostname - Host name for configuration
- * @param {string|string[]} proxyIP - Proxy IP address or array of addresses
+ * @param {string|string[]} fumidai - Fumidai IP address or array of addresses
  * @param {string} trojanPassword - Trojan password (optional, defaults to first userID)
  * @returns {string} Base64 encoded subscription content
  */
-export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
+export function genSub(userID_path, hostname, fumidai, trojanPassword = null) {
 	// Add all CloudFlare public CNAME domains
 	const mainDomains = new Set([
 		hostname,
@@ -32,7 +32,7 @@ export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
 		'freeyx.cloudflare88.eu.org',    // 1000ip/3min
 		'cloudflare.182682.xyz',         // 15ip/15min
 		'cfip.cfcdn.vip',                // 6ip/1day
-		...proxyIPs,
+		...fumidais,
 		// Manual update and unknown frequency
 		'cf.0sm.com',
 		'cloudflare-ip.mofashi.ltd',
@@ -48,7 +48,7 @@ export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
 	]);
 
 	const userIDArray = userID_path.includes(',') ? userID_path.split(",") : [userID_path];
-	const proxyIPArray = Array.isArray(proxyIP) ? proxyIP : (proxyIP ? (proxyIP.includes(',') ? proxyIP.split(',') : [proxyIP]) : proxyIPs);
+	const fumidaiArray = Array.isArray(fumidai) ? fumidai : (fumidai ? (fumidai.includes(',') ? fumidai.split(',') : [fumidai]) : fumidais);
 	const randomPath = () => '/' + Math.random().toString(36).substring(2, 15) + '?ed=2048';
 	const commonUrlPartHttp = `?encryption=none&security=none&fp=random&type=ws&host=${hostname}&path=${encodeURIComponent(randomPath())}#`;
 	const commonUrlPartHttps = `?encryption=none&security=tls&sni=${hostname}&fp=random&type=ws&host=${hostname}&path=%2F%3Fed%3D2048#`;
@@ -75,11 +75,11 @@ export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
 			});
 		});
 
-		// Generate proxy HTTPS URLs
-		proxyIPArray.forEach((proxyAddr) => {
-			const [proxyHost, proxyPort = '443'] = proxyAddr.split(':');
-			const urlPart = `${hostname.split('.')[0]}-${proxyHost}-HTTPS-${proxyPort}`;
-			const secondaryProtocolHttps = atob(pt) + '://' + userID + atob(at) + proxyHost + ':' + proxyPort + commonUrlPartHttps + urlPart + '-' + atob(ed);
+		// Generate fumidai HTTPS URLs
+		fumidaiArray.forEach((fumidaiAddr) => {
+			const [fumidaiHost, fumidaiPort = '443'] = fumidaiAddr.split(':');
+			const urlPart = `${hostname.split('.')[0]}-${fumidaiHost}-HTTPS-${fumidaiPort}`;
+			const secondaryProtocolHttps = atob(pt) + '://' + userID + atob(at) + fumidaiHost + ':' + fumidaiPort + commonUrlPartHttps + urlPart + '-' + atob(ed);
 			allUrls.push(secondaryProtocolHttps);
 		});
 
@@ -88,7 +88,7 @@ export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
 
 	// Generate Trojan URLs
 	const effectiveTrojanPassword = trojanPassword || userIDArray[0];
-	const trojanUrls = generateTrojanUrls(effectiveTrojanPassword, hostname, proxyIPArray);
+	const trojanUrls = generateTrojanUrls(effectiveTrojanPassword, hostname, fumidaiArray);
 
 	return btoa([...result, ...trojanUrls].join('\n'));
 }
@@ -97,10 +97,10 @@ export function genSub(userID_path, hostname, proxyIP, trojanPassword = null) {
  * Generates Trojan subscription URLs
  * @param {string} password - Trojan password
  * @param {string} hostname - Host name
- * @param {string[]} proxyIPArray - Proxy IP array
+ * @param {string[]} fumidaiArray - Fumidai IP array
  * @returns {string[]} Array of Trojan URLs
  */
-function generateTrojanUrls(password, hostname, proxyIPArray) {
+function generateTrojanUrls(password, hostname, fumidaiArray) {
 	const urls = [];
 	const encodedPassword = encodeURIComponent(password);
 	const commonParams = `?security=tls&type=ws&host=${hostname}&path=%2F%3Fed%3D2048&sni=${hostname}`;
@@ -112,11 +112,11 @@ function generateTrojanUrls(password, hostname, proxyIPArray) {
 		urls.push(trojanUrl);
 	});
 
-	// Proxy IP Trojan URLs
-	proxyIPArray.forEach((proxyAddr) => {
-		const [proxyHost, proxyPort = '443'] = proxyAddr.split(':');
-		const urlPart = `${hostname.split('.')[0]}-${proxyHost}-Trojan-${proxyPort}`;
-		const trojanUrl = `${atob(trojanPt)}://${encodedPassword}@${proxyHost}:${proxyPort}${commonParams}#${urlPart}`;
+	// Fumidai IP Trojan URLs
+	fumidaiArray.forEach((fumidaiAddr) => {
+		const [fumidaiHost, fumidaiPort = '443'] = fumidaiAddr.split(':');
+		const urlPart = `${hostname.split('.')[0]}-${fumidaiHost}-Trojan-${fumidaiPort}`;
+		const trojanUrl = `${atob(trojanPt)}://${encodedPassword}@${fumidaiHost}:${fumidaiPort}${commonParams}#${urlPart}`;
 		urls.push(trojanUrl);
 	});
 
@@ -127,11 +127,11 @@ function generateTrojanUrls(password, hostname, proxyIPArray) {
  * Generates Trojan-only subscription content
  * @param {string} password - Trojan password
  * @param {string} hostname - Host name
- * @param {string|string[]} proxyIP - Proxy IP address or array of addresses
+ * @param {string|string[]} fumidai - Fumidai IP address or array of addresses
  * @returns {string} Base64 encoded Trojan subscription content
  */
-export function genTrojanSub(password, hostname, proxyIP) {
-	const proxyIPArray = Array.isArray(proxyIP) ? proxyIP : (proxyIP ? (proxyIP.includes(',') ? proxyIP.split(',') : [proxyIP]) : proxyIPs);
-	const urls = generateTrojanUrls(password, hostname, proxyIPArray);
+export function genTrojanSub(password, hostname, fumidai) {
+	const fumidaiArray = Array.isArray(fumidai) ? fumidai : (fumidai ? (fumidai.includes(',') ? fumidai.split(',') : [fumidai]) : fumidais);
+	const urls = generateTrojanUrls(password, hostname, fumidaiArray);
 	return btoa(urls.join('\n'));
 }

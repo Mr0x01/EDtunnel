@@ -3,20 +3,20 @@
  */
 
 import { at, pt, trojanPt } from '../config/constants.js';
-import { proxyIPs } from '../config/defaults.js';
+import { fumidais } from '../config/defaults.js';
 
 /**
  * Generates configuration HTML page for VLESS and Trojan clients.
  * @param {string} userIDs - Single or comma-separated user IDs
  * @param {string} hostName - Host name for configuration
- * @param {string|string[]} proxyIP - Proxy IP address or array of addresses
+ * @param {string|string[]} fumidai - Fumidai IP address or array of addresses
  * @param {string} trojanPassword - Trojan password (optional, defaults to first userID)
  * @returns {string} Configuration HTML
  */
-export function getConfig(userIDs, hostName, proxyIP, trojanPassword = null) {
-	// Get proxy port from first proxy address
-	const firstProxy = Array.isArray(proxyIP) ? proxyIP[0] : proxyIP;
-	const proxyPort = firstProxy.includes(':') ? firstProxy.split(':')[1] : '443';
+export function getConfig(userIDs, hostName, fumidai, trojanPassword = null) {
+	// Get fumidai port from first fumidai address
+	const firstFumidai = Array.isArray(fumidai) ? fumidai[0] : fumidai;
+	const fumidaiPort = firstFumidai.includes(':') ? firstFumidai.split(':')[1] : '443';
 
 	const commonUrlPart = `?encryption=none&security=tls&sni=${hostName}&fp=randomized&type=ws&host=${hostName}&path=%2F%3Fed%3D2048#${hostName}`;
 
@@ -199,13 +199,13 @@ export function getConfig(userIDs, hostName, proxyIP, trojanPassword = null) {
 
 	// Generate Trojan configuration
 	const trojanMain = atob(trojanPt) + '://' + encodeURIComponent(effectiveTrojanPassword) + atob(at) + hostName + ":443" + trojanCommonUrlPart;
-	const firstProxyHostForTrojan = (Array.isArray(proxyIP) ? proxyIP[0] : proxyIP).split(':')[0];
-	const trojanSec = atob(trojanPt) + '://' + encodeURIComponent(effectiveTrojanPassword) + atob(at) + firstProxyHostForTrojan + ":" + proxyPort + trojanCommonUrlPart;
+	const firstFumidaiHostForTrojan = (Array.isArray(fumidai) ? fumidai[0] : fumidai).split(':')[0];
+	const trojanSec = atob(trojanPt) + '://' + encodeURIComponent(effectiveTrojanPassword) + atob(at) + firstFumidaiHostForTrojan + ":" + fumidaiPort + trojanCommonUrlPart;
 
 	const configOutput = userIDArray.map((userID) => {
 		const protocolMain = atob(pt) + '://' + userID + atob(at) + hostName + ":443" + commonUrlPart;
-		const firstProxyHost = (Array.isArray(proxyIP) ? proxyIP[0] : proxyIP).split(':')[0];
-		const protocolSec = atob(pt) + '://' + userID + atob(at) + firstProxyHost + ":" + proxyPort + commonUrlPart;
+		const firstFumidaiHost = (Array.isArray(fumidai) ? fumidai[0] : fumidai).split(':')[0];
+		const protocolSec = atob(pt) + '://' + userID + atob(at) + firstFumidaiHost + ":" + fumidaiPort + commonUrlPart;
 		return `
       <div class="container config-item">
         <h2>UUID: ${userID}</h2>
@@ -217,16 +217,16 @@ export function getConfig(userIDs, hostName, proxyIP, trojanPassword = null) {
 
         <h3>VLESS Best IP Configuration</h3>
         <div class="input-group mb-3">
-          <select class="form-select" id="proxySelect" onchange="updateProxyConfig()">
-            ${typeof proxyIP === 'string' ?
-				`<option value="${proxyIP}">${proxyIP}</option>` :
-				Array.from(proxyIP).map(proxy => `<option value="${proxy}">${proxy}</option>`).join('')}
+          <select class="form-select" id="fumidaiSelect" onchange="updateFumidaiConfig()">
+            ${typeof fumidai === 'string' ?
+				`<option value="${fumidai}">${fumidai}</option>` :
+				Array.from(fumidai).map(fumidai => `<option value="${fumidai}">${fumidai}</option>`).join('')}
           </select>
         </div>
 		<br>
         <div class="code-container">
-          <pre><code id="proxyConfig">${protocolSec}</code></pre>
-          <button class="btn copy-btn" onclick='copyToClipboard(document.getElementById("proxyConfig").textContent)'><i class="fas fa-copy"></i> Copy</button>
+          <pre><code id="fumidaiConfig">${protocolSec}</code></pre>
+          <button class="btn copy-btn" onclick='copyToClipboard(document.getElementById("fumidaiConfig").textContent)'><i class="fas fa-copy"></i> Copy</button>
         </div>
       </div>
     `;
@@ -245,16 +245,16 @@ export function getConfig(userIDs, hostName, proxyIP, trojanPassword = null) {
 
         <h3>Trojan Best IP Configuration</h3>
         <div class="input-group mb-3">
-          <select class="form-select" id="trojanProxySelect" onchange="updateTrojanProxyConfig()">
-            ${typeof proxyIP === 'string' ?
-				`<option value="${proxyIP}">${proxyIP}</option>` :
-				Array.from(proxyIP).map(proxy => `<option value="${proxy}">${proxy}</option>`).join('')}
+          <select class="form-select" id="trojanFumidaiSelect" onchange="updateTrojanFumidaiConfig()">
+            ${typeof fumidai === 'string' ?
+				`<option value="${fumidai}">${fumidai}</option>` :
+				Array.from(fumidai).map(fumidai => `<option value="${fumidai}">${fumidai}</option>`).join('')}
           </select>
         </div>
 		<br>
         <div class="code-container">
-          <pre><code id="trojanProxyConfig">${trojanSec}</code></pre>
-          <button class="btn copy-btn" onclick='copyToClipboard(document.getElementById("trojanProxyConfig").textContent)'><i class="fas fa-copy"></i> Copy</button>
+          <pre><code id="trojanFumidaiConfig">${trojanSec}</code></pre>
+          <button class="btn copy-btn" onclick='copyToClipboard(document.getElementById("trojanFumidaiConfig").textContent)'><i class="fas fa-copy"></i> Copy</button>
         </div>
       </div>
     `;
@@ -285,20 +285,20 @@ export function getConfig(userIDs, hostName, proxyIP, trojanPassword = null) {
           });
       }
 
-      function updateProxyConfig() {
-        const select = document.getElementById('proxySelect');
-        const proxyValue = select.value;
-        const [host, port] = proxyValue.split(':');
+      function updateFumidaiConfig() {
+        const select = document.getElementById('fumidaiSelect');
+        const fumidaiValue = select.value;
+        const [host, port] = fumidaiValue.split(':');
         const protocolSec = atob(pt) + '://' + userIDArray[0] + atob(at) + host + ":" + port + commonUrlPart;
-        document.getElementById("proxyConfig").textContent = protocolSec;
+        document.getElementById("fumidaiConfig").textContent = protocolSec;
       }
 
-      function updateTrojanProxyConfig() {
-        const select = document.getElementById('trojanProxySelect');
-        const proxyValue = select.value;
-        const [host, port] = proxyValue.split(':');
+      function updateTrojanFumidaiConfig() {
+        const select = document.getElementById('trojanFumidaiSelect');
+        const fumidaiValue = select.value;
+        const [host, port] = fumidaiValue.split(':');
         const trojanSec = atob(trojanPt) + '://' + trojanPassword + atob(at) + host + ":" + port + trojanCommonUrlPart;
-        document.getElementById("trojanProxyConfig").textContent = trojanSec;
+        document.getElementById("trojanFumidaiConfig").textContent = trojanSec;
       }
     </script>
   </body>

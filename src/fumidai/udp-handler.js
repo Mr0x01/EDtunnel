@@ -1,6 +1,6 @@
 /**
  * UDP outbound connection handler
- * Manages UDP traffic routing through VLESS outbound proxy
+ * Manages UDP traffic routing through VLESS outbound fumidai
  */
 
 import { WS_READY_STATE_OPEN } from '../config/constants.js';
@@ -14,7 +14,7 @@ import { vlessOutboundConnect, VLESS_CMD_UDP } from './vless.js';
  */
 export function canHandleUDP(config) {
 	// VLESS outbound supports UDP natively
-	if (config.proxyType === 'vless' && config.parsedVlessOutbound) {
+	if (config.fumidaiType === 'vless' && config.parsedVlessOutbound) {
 		return true;
 	}
 	// Native UDP support could be added here in the future
@@ -23,7 +23,7 @@ export function canHandleUDP(config) {
 }
 
 /**
- * Handles UDP outbound connections via VLESS proxy
+ * Handles UDP outbound connections via VLESS fumidai
  * @param {WebSocket} webSocket - Client WebSocket connection
  * @param {Uint8Array|null} protocolResponseHeader - VLESS response header
  * @param {number} addressType - Destination address type
@@ -36,7 +36,7 @@ export function canHandleUDP(config) {
  */
 export async function handleUDPOutbound(webSocket, protocolResponseHeader, addressType, addressRemote, portRemote, rawClientData, log, config) {
 	// Only VLESS outbound supports UDP currently
-	if (config.proxyType !== 'vless' || !config.parsedVlessOutbound) {
+	if (config.fumidaiType !== 'vless' || !config.parsedVlessOutbound) {
 		log('[UDP] No UDP-capable outbound configured');
 		safeCloseWebSocket(webSocket);
 		return null;

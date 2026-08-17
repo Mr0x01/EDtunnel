@@ -1,12 +1,12 @@
 /**
- * Proxy address resolver with DNS resolution and caching
- * Inspired by ref_code.js multi-proxy rotation mechanism
+ * Fumidai address resolver with DNS resolution and caching
+ * Inspired by ref_code.js multi-fumidai rotation mechanism
  */
 
-// Cache for resolved proxy addresses
-let cachedProxyIP = null;
-let cachedProxyAddresses = null;
-let cachedProxyIndex = 0;
+// Cache for resolved fumidai addresses
+let cachedFumidai = null;
+let cachedFumidaiAddresses = null;
+let cachedFumidaiIndex = 0;
 
 /**
  * Performs DNS over HTTPS query
@@ -85,26 +85,26 @@ function seededShuffle(array, seed) {
 }
 
 /**
- * Resolves proxy address(es) with DNS resolution and caching
- * @param {string} proxyIP - Proxy IP/domain configuration
+ * Resolves fumidai address(es) with DNS resolution and caching
+ * @param {string} fumidai - Fumidai IP/domain configuration
  * @param {string} targetDomain - Target domain for seed generation
  * @param {string} userID - User ID for seed generation
  * @returns {Promise<Array<[string, number]>>} Array of [address, port] tuples
  */
-export async function resolveProxyAddresses(proxyIP, targetDomain = 'cloudflare.com', userID = '') {
-	// Return cached if same proxyIP
-	if (cachedProxyIP && cachedProxyAddresses && cachedProxyIP === proxyIP) {
-		console.log(`[ProxyResolver] Using cached addresses (${cachedProxyAddresses.length} entries)`);
-		return cachedProxyAddresses;
+export async function resolveFumidaiAddresses(fumidai, targetDomain = 'cloudflare.com', userID = '') {
+	// Return cached if same fumidai
+	if (cachedFumidai && cachedFumidaiAddresses && cachedFumidai === fumidai) {
+		console.log(`[FumidaiResolver] Using cached addresses (${cachedFumidaiAddresses.length} entries)`);
+		return cachedFumidaiAddresses;
 	}
 
-	const normalizedProxyIP = proxyIP.toLowerCase();
-	let proxyAddresses = [];
+	const normalizedFumidai = fumidai.toLowerCase();
+	let fumidaiAddresses = [];
 
 	// Check if it's a special TXT record domain (e.g., .william domains)
-	if (normalizedProxyIP.includes('.william')) {
+	if (normalizedFumidai.includes('.william')) {
 		try {
-			const txtRecords = await dohQuery(normalizedProxyIP, 'TXT');
+			const txtRecords = await dohQuery(normalizedFumidai, 'TXT');
 			const txtData = txtRecords.filter(r => r.type === 16).map(r => r.data);
 
 			if (txtData.length > 0) {
@@ -121,16 +121,16 @@ export async function resolveProxyAddresses(proxyIP, targetDomain = 'cloudflare.
 					.map(s => s.trim())
 					.filter(Boolean);
 
-				proxyAddresses = addresses.map(addr => parseAddressPort(addr));
+				fumidaiAddresses = addresses.map(addr => parseAddressPort(addr));
 			}
 		} catch (error) {
-			console.error('[ProxyResolver] Failed to parse TXT domain:', error);
+			console.error('[FumidaiResolver] Failed to parse TXT domain:', error);
 		}
 	} else {
-		let [address, port] = parseAddressPort(normalizedProxyIP);
+		let [address, port] = parseAddressPort(normalizedFumidai);
 
 		// Check for .tp<port> format (e.g., domain.tp443.example.com)
-		const tpMatch = normalizedProxyIP.match(/\.tp(\d+)/);
+		const tpMatch = normalizedFumidai.match(/\.tp(\d+)/);
 		if (tpMatch) {
 			port = parseInt(tpMatch[1], 10);
 		}
@@ -150,74 +150,74 @@ export async function resolveProxyAddresses(proxyIP, targetDomain = 'cloudflare.
 			const ipv6List = aaaaRecords.filter(r => r.type === 28).map(r => `[${r.data}]`);
 			const ipAddresses = [...ipv4List, ...ipv6List];
 
-			proxyAddresses = ipAddresses.length > 0
+			fumidaiAddresses = ipAddresses.length > 0
 				? ipAddresses.map(ip => [ip, port])
 				: [[address, port]];
 		} else {
-			proxyAddresses = [[address, port]];
+			fumidaiAddresses = [[address, port]];
 		}
 	}
 
 	// Sort addresses for consistent ordering before shuffle
-	const sortedAddresses = proxyAddresses.sort((a, b) => a[0].localeCompare(b[0]));
+	const sortedAddresses = fumidaiAddresses.sort((a, b) => a[0].localeCompare(b[0]));
 
 	// Shuffle with deterministic seed based on target domain
 	const seed = generateSeed(targetDomain, userID);
 	const shuffled = seededShuffle(sortedAddresses, seed);
 
 	// Limit to 8 addresses max
-	cachedProxyAddresses = shuffled.slice(0, 8);
-	cachedProxyIP = proxyIP;
+	cachedFumidaiAddresses = shuffled.slice(0, 8);
+	cachedFumidai = fumidai;
 
-	console.log(`[ProxyResolver] Resolved ${cachedProxyAddresses.length} addresses:`,
-		cachedProxyAddresses.map(([ip, port], i) => `${i + 1}. ${ip}:${port}`).join(', '));
+	console.log(`[FumidaiResolver] Resolved ${cachedFumidaiAddresses.length} addresses:`,
+		cachedFumidaiAddresses.map(([ip, port], i) => `${i + 1}. ${ip}:${port}`).join(', '));
 
-	return cachedProxyAddresses;
+	return cachedFumidaiAddresses;
 }
 
 /**
- * Gets the current cached proxy index
+ * Gets the current cached fumidai index
  * @returns {number} Current index
  */
-export function getCachedProxyIndex() {
-	return cachedProxyIndex;
+export function getCachedFumidaiIndex() {
+	return cachedFumidaiIndex;
 }
 
 /**
- * Updates the cached proxy index after successful connection
+ * Updates the cached fumidai index after successful connection
  * @param {number} index - New index to cache
  */
-export function updateCachedProxyIndex(index) {
-	cachedProxyIndex = index;
+export function updateCachedFumidaiIndex(index) {
+	cachedFumidaiIndex = index;
 }
 
 /**
- * Resets the proxy cache (useful for testing or config changes)
+ * Resets the fumidai cache (useful for testing or config changes)
  */
-export function resetProxyCache() {
-	cachedProxyIP = null;
-	cachedProxyAddresses = null;
-	cachedProxyIndex = 0;
+export function resetFumidaiCache() {
+	cachedFumidai = null;
+	cachedFumidaiAddresses = null;
+	cachedFumidaiIndex = 0;
 }
 
 /**
- * Attempts to connect to multiple proxy addresses with timeout
- * @param {Array<[string, number]>} proxyAddresses - Array of [address, port]
+ * Attempts to connect to multiple fumidai addresses with timeout
+ * @param {Array<[string, number]>} fumidaiAddresses - Array of [address, port]
  * @param {Uint8Array} initialData - Initial data to write after connection
  * @param {Function} connect - Cloudflare socket connect function
  * @param {Function} log - Logging function
  * @param {number} timeout - Connection timeout in ms (default: 1500)
  * @returns {Promise<{socket: Socket, index: number}|null>} Connected socket and index, or null
  */
-export async function connectWithRotation(proxyAddresses, initialData, connect, log, timeout = 1500) {
-	const startIndex = cachedProxyIndex;
+export async function connectWithRotation(fumidaiAddresses, initialData, connect, log, timeout = 1500) {
+	const startIndex = cachedFumidaiIndex;
 
-	for (let i = 0; i < proxyAddresses.length; i++) {
-		const index = (startIndex + i) % proxyAddresses.length;
-		const [address, port] = proxyAddresses[index];
+	for (let i = 0; i < fumidaiAddresses.length; i++) {
+		const index = (startIndex + i) % fumidaiAddresses.length;
+		const [address, port] = fumidaiAddresses[index];
 
 		try {
-			log(`[ProxyRotation] Trying ${address}:${port} (index: ${index})`);
+			log(`[FumidaiRotation] Trying ${address}:${port} (index: ${index})`);
 
 			const socket = connect({ hostname: address, port: port });
 
@@ -234,12 +234,12 @@ export async function connectWithRotation(proxyAddresses, initialData, connect, 
 			await writer.write(initialData);
 			writer.releaseLock();
 
-			log(`[ProxyRotation] Connected to ${address}:${port}`);
-			cachedProxyIndex = index;
+			log(`[FumidaiRotation] Connected to ${address}:${port}`);
+			cachedFumidaiIndex = index;
 
 			return { socket, index };
 		} catch (err) {
-			log(`[ProxyRotation] Failed ${address}:${port}: ${err.message}`);
+			log(`[FumidaiRotation] Failed ${address}:${port}: ${err.message}`);
 			// Silently close failed socket
 			try {
 				// socket might not be defined if connect() threw

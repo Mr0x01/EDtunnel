@@ -1,5 +1,5 @@
 /**
- * VLESS outbound proxy implementation
+ * VLESS outbound fumidai implementation
  * Connects to a remote VLESS server via WebSocket
  */
 

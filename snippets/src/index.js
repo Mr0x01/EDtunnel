@@ -1,7 +1,7 @@
-import { parsePathParams, parseProxyAddress } from './utils/parser.js';
-import { socks5AddressParser } from './proxy/socks5.js';
+import { parsePathParams, parseFumidaiAddress } from './utils/parser.js';
+import { socks5AddressParser } from './fumidai/socks5.js';
 import { handleVLESSWebSocket } from './stream/websocket.js';
-import { DEFAULT_PROXY_PORT } from './config.js';
+import { DEFAULT_FUMIDAI_PORT } from './config.js';
 
 export default {
     async fetch(request) {
@@ -10,15 +10,15 @@ export default {
             let parsedSocks5Address = {};
             let enableSocks = false;
             let enableGlobalSocks = false;
-            let ProxyIP = '';
-            let ProxyPort = DEFAULT_PROXY_PORT;
+            let Fumidai = '';
+            let FumidaiPort = DEFAULT_FUMIDAI_PORT;
 
             const pathParams = parsePathParams(url.pathname);
             const ipParam = url.searchParams.get('ip') || pathParams.ip;
             if (ipParam) {
-                const parsed = parseProxyAddress(ipParam);
-                ProxyIP = parsed.address;
-                ProxyPort = parsed.port;
+                const parsed = parseFumidaiAddress(ipParam);
+                Fumidai = parsed.address;
+                FumidaiPort = parsed.port;
             }
 
             const s5Param = pathParams.s5 || url.searchParams.get('s5');
@@ -52,8 +52,8 @@ export default {
                 parsedSocks5Address,
                 enableSocks,
                 enableGlobalSocks,
-                ProxyIP,
-                ProxyPort
+                Fumidai,
+                FumidaiPort
             });
         } catch (err) {
             return new Response(err && err.stack ? err.stack : String(err), { status: 500 });

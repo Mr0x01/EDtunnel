@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-EDtunnel is a Cloudflare Worker/Pages-based proxy tool that implements WebSocket transport protocol for tunneling traffic. It runs on Cloudflare's serverless infrastructure and provides a web-based proxy service with multi-protocol support (VLESS and Trojan).
+EDtunnel is a Cloudflare Worker/Pages-based fumidai tool that implements WebSocket transport protocol for tunneling traffic. It runs on Cloudflare's serverless infrastructure and provides a web-based fumidai service with multi-protocol support (VLESS and Trojan).
 
 ## Development Commands
 
@@ -38,14 +38,14 @@ src/
 │   ├── vless.js          # VLESS protocol parsing
 │   ├── trojan.js         # Trojan protocol parsing
 │   └── dns.js            # DNS query handling over UDP
-├── proxy/
+├── fumidai/
 │   ├── tcp.js            # TCP connection management
 │   ├── udp.js            # UDP connection handling
 │   ├── udp-handler.js    # UDP packet processing
-│   ├── http.js           # HTTP proxy support
-│   ├── vless.js          # VLESS proxy implementation
+│   ├── http.js           # HTTP fumidai support
+│   ├── vless.js          # VLESS fumidai implementation
 │   ├── stream.js         # Stream processing utilities
-│   └── socks5.js         # SOCKS5 proxy client
+│   └── socks5.js         # SOCKS5 fumidai client
 ├── generators/
 │   ├── config-page.js    # Web UI configuration page
 │   └── subscription.js   # VLESS/Clash subscription generation
@@ -54,7 +54,7 @@ src/
     ├── validation.js     # UUID validation
     ├── parser.js         # Configuration parsing
     ├── crypto.js         # Cryptographic utilities
-    ├── proxyResolver.js  # Proxy address resolution
+    ├── fumidaiResolver.js  # Fumidai address resolution
     └── websocket.js      # WebSocket utilities
 ```
 
@@ -70,7 +70,7 @@ src/
 2. `handlers/main.js` → routes by URL path (`/cf`, `/{uuid}`, `/sub/{uuid}`, `/trojan`)
 3. `handlers/websocket.js` → WebSocket upgrade for VLESS/Trojan tunneling
 4. `protocol/vless.js` or `protocol/trojan.js` → parse protocol header, extract destination
-5. `proxy/tcp.js`, `proxy/udp.js`, or `proxy/socks5.js` → establish outbound connection
+5. `fumidai/tcp.js`, `fumidai/udp.js`, or `fumidai/socks5.js` → establish outbound connection
 
 ## Configuration
 
@@ -79,11 +79,11 @@ Environment variables (set in `wrangler.toml` or Cloudflare Dashboard):
 | Variable | Description |
 |----------|-------------|
 | `UUID` | User authentication (comma-separated for multiple) |
-| `PROXYIP` | Proxy server addresses (comma-separated, with optional port) |
-| `SOCKS5` | SOCKS5 proxy (`user:pass@host:port`) |
+| `FUMIDAI` | Fumidai server addresses (comma-separated, with optional port) |
+| `SOCKS5` | SOCKS5 fumidai (`user:pass@host:port`) |
 | `TROJAN_PASSWORD` | Trojan protocol password (optional, uses UUID if not set) |
 
-URL query parameters can override: `proxyip`, `socks5` (UUID cannot be overridden for security).
+URL query parameters can override: `fumidai`, `socks5` (UUID cannot be overridden for security).
 
 ## Key Implementation Details
 
@@ -91,7 +91,7 @@ URL query parameters can override: `proxyip`, `socks5` (UUID cannot be overridde
 - VLESS protocol version 0 with WebSocket transport
 - Trojan protocol support with SHA-224 password hashing
 - UDP support for DNS queries
-- Multi-proxy load balancing via random selection
+- Multi-fumidai load balancing via random selection
 - Subscription formats: VLESS links, Clash YAML, Base64 encoded
 
 ## Testing

@@ -1,9 +1,9 @@
 /**
- * SOCKS5 proxy implementation
+ * SOCKS5 fumidai implementation
  */
 
 /**
- * Establishes SOCKS5 proxy connection.
+ * Establishes SOCKS5 fumidai connection.
  * Implements full SOCKS5 handshake including optional authentication.
  * @param {number} addressType - Type of address (1=IPv4, 2=Domain, 3=IPv6)
  * @param {string} addressRemote - Remote address to connect to

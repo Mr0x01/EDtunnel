@@ -1,4 +1,4 @@
-import { DEFAULT_PROXY_PORT } from '../config.js';
+import { DEFAULT_FUMIDAI_PORT } from '../config.js';
 
 /**
  * 解析 URL 路径参数
@@ -22,8 +22,8 @@ export function parsePathParams(pathname) {
 /**
  * 解析代理地址，支持 IPv6 和端口
  */
-export function parseProxyAddress(address) {
-    if (!address) return { address: address, port: DEFAULT_PROXY_PORT };
+export function parseFumidaiAddress(address) {
+    if (!address) return { address: address, port: DEFAULT_FUMIDAI_PORT };
     if (address.startsWith('[')) {
         const closeBracketIndex = address.indexOf(']');
         if (closeBracketIndex !== -1) {
@@ -35,7 +35,7 @@ export function parseProxyAddress(address) {
                     return { address: ipv6Part, port: port };
                 }
             }
-            return { address: ipv6Part, port: DEFAULT_PROXY_PORT };
+            return { address: ipv6Part, port: DEFAULT_FUMIDAI_PORT };
         }
     }
     const colonIndex = address.lastIndexOf(':');
@@ -47,12 +47,12 @@ export function parseProxyAddress(address) {
             return { address: addressPart, port: port };
         }
     }
-    return { address: address, port: DEFAULT_PROXY_PORT };
+    return { address: address, port: DEFAULT_FUMIDAI_PORT };
 }
 
 /**
  * 获取代理配置
  */
-export function getProxyConfiguration(addressRemote, portRemote, ProxyIP, ProxyPort) {
-    return { ip: ProxyIP || addressRemote, port: ProxyPort || portRemote };
+export function getFumidaiConfiguration(addressRemote, portRemote, Fumidai, FumidaiPort) {
+    return { ip: Fumidai || addressRemote, port: FumidaiPort || portRemote };
 }

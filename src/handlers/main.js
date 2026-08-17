@@ -2,12 +2,12 @@
  * Main request handler and routing
  */
 
-import { createRequestConfig, defaultUserID, proxyIPs } from '../config/defaults.js';
+import { createRequestConfig, defaultUserID, fumidais } from '../config/defaults.js';
 import { handleDefaultPath } from './http.js';
 import { protocolOverWSHandler } from './websocket.js';
 import { getConfig } from '../generators/config-page.js';
 import { genSub, genTrojanSub } from '../generators/subscription.js';
-import { handleProxyConfig, socks5AddressParser, selectRandomAddress, parseEncodedQueryParams, parsePathProxyParams, parseVlessUrl } from '../utils/parser.js';
+import { handleFumidaiConfig, socks5AddressParser, selectRandomAddress, parseEncodedQueryParams, parsePathFumidaiParams, parseVlessUrl } from '../utils/parser.js';
 import { isValidUUID } from '../utils/validation.js';
 
 // Validate default user ID at startup
@@ -26,48 +26,48 @@ if (!isValidUUID(defaultUserID)) {
  */
 export async function handleRequest(request, env, ctx, connect) {
 	try {
-		const { UserId, PROXYIP, SOCKS5, SOCKS5_RELAY, TROJAN_PASSWORD } = env;
+		const { UserId, FUMIDAI, SOCKS5, SOCKS5_RELAY, TROJAN_PASSWORD } = env;
 		const url = new URL(request.url);
 
 		// Create request-specific configuration
 		const requestConfig = createRequestConfig(env);
 
 		// Get URL parameters
-		let urlPROXYIP = url.searchParams.get('proxyip');
+		let urlFUMIDAI = url.searchParams.get('fumidai');
 		let urlSOCKS5 = url.searchParams.get('socks5');
-		const urlGlobalProxy = url.searchParams.has('globalproxy');
+		const urlGlobalFumidai = url.searchParams.has('globalfumidai');
 
 		// Check for encoded parameters in path
-		if (!urlPROXYIP && !urlSOCKS5) {
+		if (!urlFUMIDAI && !urlSOCKS5) {
 			const encodedParams = parseEncodedQueryParams(url.pathname);
-			urlPROXYIP = urlPROXYIP || encodedParams.proxyip;
+			urlFUMIDAI = urlFUMIDAI || encodedParams.fumidai;
 			urlSOCKS5 = urlSOCKS5 || encodedParams.socks5;
 		}
 
-		// Check for path-based proxy parameters (e.g., /proxyip=, /socks5=, /http=)
-		const pathParams = parsePathProxyParams(url.pathname);
+		// Check for path-based fumidai parameters (e.g., /fumidai=, /socks5=, /http=)
+		const pathParams = parsePathFumidaiParams(url.pathname);
 
 		// Path parameters have lower priority than query parameters
-		if (!urlPROXYIP && pathParams.proxyip) {
-			urlPROXYIP = pathParams.proxyip;
+		if (!urlFUMIDAI && pathParams.fumidai) {
+			urlFUMIDAI = pathParams.fumidai;
 		}
 		if (!urlSOCKS5 && pathParams.socks5) {
 			urlSOCKS5 = pathParams.socks5;
 		}
-		// Global proxy flag from path (e.g., /socks5://, /http://, /gs5=, /ghttp=) or query param (?globalproxy)
-		const enableGlobalProxy = pathParams.globalProxy || urlGlobalProxy;
+		// Global fumidai flag from path (e.g., /socks5://, /http://, /gs5=, /ghttp=) or query param (?globalfumidai)
+		const enableGlobalFumidai = pathParams.globalFumidai || urlGlobalFumidai;
 
-		// HTTP proxy parameter
+		// HTTP fumidai parameter
 		let urlHTTP = url.searchParams.get('http') || pathParams.http;
 
-		// Validate proxyip format
-		if (urlPROXYIP) {
-			const proxyPattern = /^([a-zA-Z0-9][-a-zA-Z0-9.]*(\.[a-zA-Z0-9][-a-zA-Z0-9.]*)+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[[0-9a-fA-F:]+\]):\d{1,5}$/;
-			const proxyAddresses = urlPROXYIP.split(',').map(addr => addr.trim());
-			const isValid = proxyAddresses.every(addr => proxyPattern.test(addr));
+		// Validate fumidai format
+		if (urlFUMIDAI) {
+			const fumidaiPattern = /^([a-zA-Z0-9][-a-zA-Z0-9.]*(\.[a-zA-Z0-9][-a-zA-Z0-9.]*)+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[[0-9a-fA-F:]+\]):\d{1,5}$/;
+			const fumidaiAddresses = urlFUMIDAI.split(',').map(addr => addr.trim());
+			const isValid = fumidaiAddresses.every(addr => fumidaiPattern.test(addr));
 			if (!isValid) {
-				console.warn('Invalid proxyip format:', urlPROXYIP);
-				urlPROXYIP = null;
+				console.warn('Invalid fumidai format:', urlFUMIDAI);
+				urlFUMIDAI = null;
 			}
 		}
 
@@ -84,18 +84,18 @@ export async function handleRequest(request, env, ctx, connect) {
 
 		// Apply URL parameters to request config
 		requestConfig.socks5Address = urlSOCKS5 || requestConfig.socks5Address;
-		requestConfig.globalProxy = enableGlobalProxy || requestConfig.socks5Relay;
+		requestConfig.globalFumidai = enableGlobalFumidai || requestConfig.socks5Relay;
 
 		// Log parameters for debugging
-		console.log('Config params:', requestConfig.userID, requestConfig.socks5Address, requestConfig.globalProxy, urlPROXYIP);
+		console.log('Config params:', requestConfig.userID, requestConfig.socks5Address, requestConfig.globalFumidai, urlFUMIDAI);
 
-		// Handle proxy configuration
-		const proxyConfig = handleProxyConfig(urlPROXYIP || PROXYIP);
-		requestConfig.proxyIP = proxyConfig.ip;
-		requestConfig.proxyPort = proxyConfig.port;
+		// Handle fumidai configuration
+		const fumidaiConfig = handleFumidaiConfig(urlFUMIDAI || FUMIDAI);
+		requestConfig.fumidai = fumidaiConfig.ip;
+		requestConfig.fumidaiPort = fumidaiConfig.port;
 
-		// Log final proxy settings
-		console.log('Using proxy:', requestConfig.proxyIP, requestConfig.proxyPort);
+		// Log final fumidai settings
+		console.log('Using fumidai:', requestConfig.fumidai, requestConfig.fumidaiPort);
 
 		// Parse VLESS outbound configuration (URL parameter > path parameter > environment variable)
 		let urlVLESS = url.searchParams.get('vless') || pathParams.vless;
@@ -105,8 +105,8 @@ export async function handleRequest(request, env, ctx, connect) {
 				const parsed = parseVlessUrl(vlessUrl);
 				if (parsed) {
 					requestConfig.parsedVlessOutbound = parsed;
-					requestConfig.proxyType = 'vless';
-					// Use globalProxy flag from path/query params (e.g., /gvless=, /vless://, ?globalproxy)
+					requestConfig.fumidaiType = 'vless';
+					// Use globalFumidai flag from path/query params (e.g., /gvless=, /vless://, ?globalfumidai)
 					console.log('VLESS outbound configured:', parsed.address, parsed.port);
 				}
 			} catch (err) {
@@ -114,23 +114,23 @@ export async function handleRequest(request, env, ctx, connect) {
 			}
 		}
 
-		// Parse proxy configuration (VLESS > HTTP > SOCKS5)
-		if (requestConfig.proxyType !== 'vless') {
+		// Parse fumidai configuration (VLESS > HTTP > SOCKS5)
+		if (requestConfig.fumidaiType !== 'vless') {
 			if (urlHTTP) {
 				try {
-					const selectedProxy = selectRandomAddress(urlHTTP);
-					requestConfig.parsedProxyAddress = socks5AddressParser(selectedProxy);
-					requestConfig.proxyType = 'http';
+					const selectedFumidai = selectRandomAddress(urlHTTP);
+					requestConfig.parsedFumidaiAddress = socks5AddressParser(selectedFumidai);
+					requestConfig.fumidaiType = 'http';
 				} catch (err) {
-					console.log('HTTP proxy parse error:', err.toString());
+					console.log('HTTP fumidai parse error:', err.toString());
 				}
 			} else if (requestConfig.socks5Address) {
 				try {
-					const selectedProxy = selectRandomAddress(requestConfig.socks5Address);
-					requestConfig.parsedProxyAddress = socks5AddressParser(selectedProxy);
-					requestConfig.proxyType = 'socks5';
+					const selectedFumidai = selectRandomAddress(requestConfig.socks5Address);
+					requestConfig.parsedFumidaiAddress = socks5AddressParser(selectedFumidai);
+					requestConfig.fumidaiType = 'socks5';
 				} catch (err) {
-					console.log('SOCKS5 proxy parse error:', err.toString());
+					console.log('SOCKS5 fumidai parse error:', err.toString());
 				}
 			}
 		}
@@ -161,14 +161,14 @@ export async function handleRequest(request, env, ctx, connect) {
 				if (url.pathname === `/${matchingUserID}` || url.pathname === `/sub/${matchingUserID}`) {
 					const isSubscription = url.pathname.startsWith('/sub/');
 					// Priority: URL parameter > environment variable > default
-					const proxyAddresses = urlPROXYIP
-						? urlPROXYIP.split(',').map(addr => addr.trim())
-						: (PROXYIP ? PROXYIP.split(',').map(addr => addr.trim()) : proxyIPs);
+					const fumidaiAddresses = urlFUMIDAI
+						? urlFUMIDAI.split(',').map(addr => addr.trim())
+						: (FUMIDAI ? FUMIDAI.split(',').map(addr => addr.trim()) : fumidais);
 					// Get Trojan password (priority: env > userID)
 					const trojanPassword = TROJAN_PASSWORD || matchingUserID;
 					const content = isSubscription ?
-						genSub(matchingUserID, host, proxyAddresses, trojanPassword) :
-						getConfig(matchingUserID, host, proxyAddresses, trojanPassword);
+						genSub(matchingUserID, host, fumidaiAddresses, trojanPassword) :
+						getConfig(matchingUserID, host, fumidaiAddresses, trojanPassword);
 
 					return new Response(content, {
 						status: 200,
@@ -180,11 +180,11 @@ export async function handleRequest(request, env, ctx, connect) {
 					});
 				} else if (url.pathname === `/trojan/${matchingUserID}`) {
 					// Trojan-only subscription
-					const proxyAddresses = urlPROXYIP
-						? urlPROXYIP.split(',').map(addr => addr.trim())
-						: (PROXYIP ? PROXYIP.split(',').map(addr => addr.trim()) : proxyIPs);
+					const fumidaiAddresses = urlFUMIDAI
+						? urlFUMIDAI.split(',').map(addr => addr.trim())
+						: (FUMIDAI ? FUMIDAI.split(',').map(addr => addr.trim()) : fumidais);
 					const trojanPassword = TROJAN_PASSWORD || matchingUserID;
-					const content = genTrojanSub(trojanPassword, host, proxyAddresses);
+					const content = genTrojanSub(trojanPassword, host, fumidaiAddresses);
 
 					return new Response(content, {
 						status: 200,

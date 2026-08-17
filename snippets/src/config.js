@@ -5,4 +5,4 @@ export const UUID = '67a261ba-6ae2-4e97-8578-46e117fad40d';
 export const WS_READY_STATE_OPEN = 1;
 
 // 默认代理端口
-export const DEFAULT_PROXY_PORT = 443;
+export const DEFAULT_FUMIDAI_PORT = 443;

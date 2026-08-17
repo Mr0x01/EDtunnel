@@ -1,7 +1,7 @@
 {
   "name": "edtunnel",
   "version": "2.0.0",
-  "description": "A Cloudflare Worker-based VLESS proxy with WebSocket transport. Modular architecture for easy maintenance.",
+  "description": "A Cloudflare Worker-based VLESS fumidai with WebSocket transport. Modular architecture for easy maintenance.",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

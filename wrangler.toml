@@ -1,11 +1,11 @@
-name = "wormhole"
+name = "shampoo-epic-speedtest"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 # node_compat = true
 workers_dev = true
 
 [vars]
-# PROXYIP = "211.230.110.231:50008"
+# FUMIDAI = "211.230.110.231:50008"
 UserId = "67a261ba-6ae2-4e97-8578-46e117fad40d"
 # TROJAN_PASSWORD = "your-trojan-password"  # Optional: If not set, UUID will be used as password
 # SOCKS5 = "127.0.0.1:1080"

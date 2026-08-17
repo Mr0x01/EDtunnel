@@ -2,12 +2,12 @@
  * WebSocket protocol handler
  */
 
-import { makeReadableWebSocketStream } from '../proxy/stream.js';
-import { handleTCPOutBound } from '../proxy/tcp.js';
+import { makeReadableWebSocketStream } from '../fumidai/stream.js';
+import { handleTCPOutBound } from '../fumidai/tcp.js';
 import { handleDNSQuery } from '../protocol/dns.js';
 import { processProtocolHeader } from '../protocol/vless.js';
 import { isTrojanProtocol, processTrojanHeader } from '../protocol/trojan.js';
-import { canHandleUDP, handleUDPOutbound } from '../proxy/udp-handler.js';
+import { canHandleUDP, handleUDPOutbound } from '../fumidai/udp-handler.js';
 
 /**
  * Handles protocol over WebSocket requests.
@@ -108,7 +108,7 @@ export async function protocolOverWSHandler(request, config, connect) {
 					// Fallback to DNS-only mode when no UDP-capable outbound
 					isDns = true;
 				} else {
-					throw new Error('UDP proxy requires VLESS outbound configuration');
+					throw new Error('UDP fumidai requires VLESS outbound configuration');
 				}
 				return; // Early return after setting isDns or throwing error
 			}

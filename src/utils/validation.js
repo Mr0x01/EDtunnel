@@ -14,14 +14,14 @@ export function isValidUUID(uuid) {
 }
 
 /**
- * Validates proxy IP format.
+ * Validates fumidai IP format.
  * Supports domain:port, IPv4:port, and [IPv6]:port formats.
- * @param {string} proxyIP - Proxy IP string to validate
+ * @param {string} fumidai - Fumidai IP string to validate
  * @returns {boolean} True if valid format
  */
-export function isValidProxyIP(proxyIP) {
-	const proxyPattern = /^([a-zA-Z0-9][-a-zA-Z0-9.]*(\.[a-zA-Z0-9][-a-zA-Z0-9.]*)+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[[0-9a-fA-F:]+\]):\d{1,5}$/;
-	return proxyPattern.test(proxyIP);
+export function isValidFumidai(fumidai) {
+	const fumidaiPattern = /^([a-zA-Z0-9][-a-zA-Z0-9.]*(\.[a-zA-Z0-9][-a-zA-Z0-9.]*)+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|\[[0-9a-fA-F:]+\]):\d{1,5}$/;
+	return fumidaiPattern.test(fumidai);
 }
 
 /**
